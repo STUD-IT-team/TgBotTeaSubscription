@@ -5,8 +5,6 @@ from aiogram import Router
 
 router = Router()
 
-# users — словарь с данными пользователей, передается из main
-# PaymentState — класс состояния FSM, передается из main
 async def start_handler(router: Router, bot, users, get_repositories, PaymentState, dp):
     @router.message(Command("start"))
     async def cmd_start(message: Message):
@@ -23,8 +21,10 @@ async def start_handler(router: Router, bot, users, get_repositories, PaymentSta
             "status": "unpaid"
         }
         print(users)
+        int price = await get_price()
+
         await message.answer(
-            "Добро пожаловать! Оплатите взнос за этот месяц."
+            f"Добро пожаловать! Оплатите взнос {price} рублей за этот месяц."
         )
 
     return router

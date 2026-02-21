@@ -38,9 +38,14 @@ class AdminConfirmCallback(CallbackData, prefix="admin_tx"):
     user_id: int
     tx_number: str
 
+class ChangeConfirmCallback(CallbackData, prefix="change"):
+    action: str  # "approve" или "reject"
+    user_id: int
+    amount: int
 
 class PaymentState(StatesGroup):
     waiting_for_transaction = State()
+    waiting_for_confirmation = State()
 
 
 async def main():
@@ -66,21 +71,6 @@ async def main():
     await bot.delete_webhook(drop_pending_updates=True)
 
     await dp.start_polling(bot)
-    print(3)
-
-# @router.message(Command("start"))
-# async def cmd_start(message: Message):
-#     await message.answer(f"Привет, {message.from_user.first_name}!")
-#     user_id = message.from_user.id
-#     repos = await get_repositories() 
-#     await repos.user_repo.add(user_id)
-
-#     users[user_id] = {
-#         "username": message.from_user.username or str(user_id),
-#         "status": "unpaid"
-#     }
-#     print(users)
-#     await message.answer("Добро пожаловать! Я буду присылать вам напоминания об оплате.")
 
 if __name__ == "__main__":
     asyncio.run(main())
