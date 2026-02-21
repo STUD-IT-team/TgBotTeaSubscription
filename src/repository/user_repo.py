@@ -6,39 +6,36 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 
-from abstract_repository.iuser_repo import IUserRepository
-from models.user import User_Table
+from abstract_repository.i_user_repo import IUserRepository
 
 
 class UserRepository(IUserRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add(self, user: User_Table) -> User_Table:
+    async def add(self, user_id: int) -> None:
         """
         Добавляет нового пользователя в user_table
         """
         query = text("""
             INSERT INTO bot_schema.user_table (tg_id, last_notification_date)
             VALUES (:tg_id, :last_notification_date)
-            RETURNING id
         """)
         try:
             row = await self.session.execute(query, {
-                "tg_id": user.tg_id,
-                "last_notification_date": user.last_notification_date
+                "tg_id": user_id,
+                "last_notification_date": datetime.utcnow()
             })
-            new_id: int = row.scalar_one()
             await self.session.commit()
-            user.id = new_id
         except IntegrityError:
             await self.session.rollback()
             raise
         except SQLAlchemyError:
             await self.session.rollback()
             raise
-        return user
+        return None
 
     async def update_last_notification(self, tg_id: int, last_notification_date: datetime) -> None:
         """

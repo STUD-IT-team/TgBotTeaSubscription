@@ -3,10 +3,8 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 
-from models.transaction import Transaction_Table
-
 
 class ITransactionRepository(ABC):
     @abstractmethod
-    async def add(self, transact: Transaction_Table) -> Transaction_Table:
+    async def add(self, user_id: int, number: str, date_of_approve: datetime | None = None, admin_id: int | None = None) -> None:
         pass

@@ -7,34 +7,34 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from abstract_repository.itransact_repo import ITransactionRepository
-from models.transaction import Transaction_Table
+from abstract_repository.i_transact_repo import ITransactionRepository
 
 
 class TransactionRepository(ITransactionRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         
-    async def add(self, transaction: Transaction_Table) -> Transaction_Table:
-        query = text(f"""
-            INSERT INTO bot_schema.transaction_table (user_id, number, date_of_approve, admin_id)
+    async def add(self, user_id: int, number: str, date_of_approve: datetime | None = None, admin_id: int | None = None) -> None:
+        """
+        Добавляет запись в transaction_table
+        """
+        query = text("""
+            INSERT INTO bot_schema.transaction_table (
+                user_id, number, date_of_approve, admin_id
+            )
             VALUES (:user_id, :number, :date_of_approve, :admin_id)
-            RETURNING id
         """)
         try:
-            row = await self.session.execute(query, {
-                "user_id": transaction.user_id,
-                "number": transaction.number,
-                "date_of_approve": transaction.date_of_approve,
-                "admin_id": transaction.admin_id
+            await self.session.execute(query, {
+                "user_id": user_id,
+                "number": number,
+                "date_of_approve": date_of_approve,
+                "admin_id": admin_id
             })
-            new_id: int = row.scalar_one()
             await self.session.commit()
-            transaction.id = new_id
         except IntegrityError:
             await self.session.rollback()
             raise
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             await self.session.rollback()
             raise
-        return transaction

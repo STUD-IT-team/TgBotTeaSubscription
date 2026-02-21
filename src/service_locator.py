@@ -2,14 +2,23 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
+from dataclasses import dataclass 
+from typing import Any
 
 _async_session_maker = None
+
+from abstract_repository.i_user_repo import IUserRepository
+from abstract_repository.i_transact_repo import ITransactionRepository
+
+from repository.user_repo import UserRepository
+from repository.transact_repo import TransactionRepository
+from settings import settings
 
 @dataclass
 class Repositories:
     def __init__(
         self,
-        transaction_repo: ITransactRepository,
+        transaction_repo: ITransactionRepository,
         user_repo: IUserRepository,
     ):
         self.transaction_repo = transaction_repo
@@ -46,54 +55,15 @@ async def get_sessionmaker(max_retries: int = 5, delay: int = 2) -> Any:
     return None
 
 
-async def get_service_locator() -> ServiceLocator:
+async def get_repositories():
     global _async_session_maker
 
-        if _async_session_maker is None:
-            _async_session_maker = await get_sessionmaker()
-        async with _async_session_maker() as session:
-            user_repo: IUserRepository = UserRepository(session)
-            transaction_repo: ITransactRepository = TransactRepository(session)
+    if _async_session_maker is None:
+        _async_session_maker = await get_sessionmaker()
+    async with _async_session_maker() as session:
+        user_repo: IUserRepository = UserRepository(session)
+        transaction_repo: ITransactionRepository = TransactionRepository(session)
 
-            repositories = Repositories(user_repo,transaction_repo)
+        repositories = Repositories(transaction_repo, user_repo)
 
-    #     acc_serv = AccommodationService(acc_repo)
-    #     city_serv = CityService(city_repo)
-    #     d_route_serv = DirectoryRouteService(d_route_repo)
-    #     ent_serv = EntertainmentService(ent_repo)
-    #     route_serv = RouteService(route_repo)
-    #     travel_serv = TravelService(travel_repo)
-    #     user_serv = UserService(user_repo)
-    #     auth_serv = AuthService(user_repo)
-
-    # city_contr = CityController(city_serv)
-    # route_contr = RouteController(
-    #     route_serv, travel_serv, d_route_serv, user_serv, ent_serv, acc_serv
-    # )
-    # d_route_contr = DirectoryRouteController(d_route_serv, city_serv)
-    # acc_contr = AccommodationController(acc_serv, city_serv)
-    # ent_contr = EntertainmentController(ent_serv, city_serv)
-    # travel_contr = TravelController(travel_serv, user_serv, ent_serv, acc_serv)
-    # user_contr = UserController(user_serv, auth_serv)
-
-    # services = Services(
-    #     acc_serv,
-    #     city_serv,
-    #     d_route_serv,
-    #     ent_serv,
-    #     route_serv,
-    #     travel_serv,
-    #     user_serv,
-    #     auth_serv,
-    # )
-    # controllers = Controllers(
-    #     acc_contr,
-    #     route_contr,
-    #     ent_contr,
-    #     travel_contr,
-    #     user_contr,
-    #     d_route_contr,
-    #     city_contr,
-    # )
-    return ServiceLocator(repositories)
-    # return ServiceLocator(repositories, services, controllers)
+    return repositories

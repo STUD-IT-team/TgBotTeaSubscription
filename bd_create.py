@@ -20,8 +20,8 @@ async def reset_database():
     print(f"База {DB_NAME} удалена")
 
     # Создаем новую базу
-    # await conn.execute(f'CREATE DATABASE {DB_NAME}')
-    # print(f"База {DB_NAME} создана заново")
+    await conn.execute(f'CREATE DATABASE {DB_NAME}')
+    print(f"База {DB_NAME} создана заново")
     await conn.close()
 
 
@@ -54,12 +54,6 @@ async def create_schema_and_tables():
                 is_approve BOOLEAN DEFAULT FALSE
             )
         """)
-        # Добавляем администратора только если таблица создается
-        await conn.execute(f"""
-            INSERT INTO {SCHEMA_NAME}.user_table (tg_id, is_admin, is_approve)
-            VALUES ($1, $2, $3)
-        """, 123456789, True, True)
-        print("user_table создана и админ добавлен")
     else:
         print("user_table уже существует, админ не добавлен")
 
@@ -92,7 +86,7 @@ async def create_schema_and_tables():
 
 async def main():
     await reset_database()  # Можно закомментировать, если не хотим сбрасывать базу
-    # await create_schema_and_tables()
+    await create_schema_and_tables()
     print("Схема и таблицы проверены/созданы")
 
 
