@@ -1,94 +1,111 @@
-import psycopg2
-from psycopg2 import sql
+import asyncio
+import asyncpg
 
 DB_NAME = "tgbotteadb"
 DB_USER = "nastya"
 DB_PASSWORD = "password"
 DB_HOST = "localhost"
-DB_PORT = "5432"
-SCHEMA_NAME = "bot_schema"  # твоя отдельная схема
+DB_PORT = 5432
+SCHEMA_NAME = "bot_schema"
 
-def reset_database():
-    # Подключаемся к служебной базе postgres
-    conn = psycopg2.connect(
-        dbname="postgres",
-        user=DB_USER,
-        password=DB_PASSWORD,
-        host=DB_HOST,
-        port=DB_PORT
+
+async def reset_database():
+    conn = await asyncpg.connect(
+        user=DB_USER, password=DB_PASSWORD,
+        database="postgres", host=DB_HOST, port=DB_PORT
     )
-    conn.autocommit = True
-    cursor = conn.cursor()
 
     # Удаляем старую базу
-    cursor.execute(f"DROP DATABASE IF EXISTS {DB_NAME}")
+    await conn.execute(f'DROP DATABASE IF EXISTS {DB_NAME}')
     print(f"База {DB_NAME} удалена")
 
     # Создаем новую базу
-    cursor.execute(f"CREATE DATABASE {DB_NAME}")
-    print(f"База {DB_NAME} создана заново")
-
-    cursor.close()
-    conn.close()
+    # await conn.execute(f'CREATE DATABASE {DB_NAME}')
+    # print(f"База {DB_NAME} создана заново")
+    await conn.close()
 
 
-def create_schema_and_tables():
-    conn = psycopg2.connect(
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        host=DB_HOST,
-        port=DB_PORT
+async def create_schema_and_tables():
+    conn = await asyncpg.connect(
+        user=DB_USER, password=DB_PASSWORD,
+        database=DB_NAME, host=DB_HOST, port=DB_PORT
     )
-    cursor = conn.cursor()
 
-    # Создаем схему
-    cursor.execute(sql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(
-        sql.Identifier(SCHEMA_NAME)
-    ))
+    # Создаем схему, если её нет
+    await conn.execute(f'CREATE SCHEMA IF NOT EXISTS {SCHEMA_NAME}')
 
-    # Создаем таблицу пользователей
-    cursor.execute(sql.SQL("""
-        CREATE TABLE IF NOT EXISTS {}.user_table(
-            id SERIAL PRIMARY KEY,
-            tg_id BIGINT UNIQUE,
-            last_notification_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            is_admin BOOLEAN DEFAULT FALSE,
-            is_approve BOOLEAN DEFAULT FALSE
+    # Проверяем, существует ли таблица user_table
+    user_table_exists = await conn.fetchval(
+        """
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_schema = $1 AND table_name = 'user_table'
         )
-    """).format(sql.Identifier(SCHEMA_NAME)))
+        """, SCHEMA_NAME
+    )
 
-    # Создаем таблицу транзакций
-    cursor.execute(sql.SQL("""
-        CREATE TABLE IF NOT EXISTS {}.transaction_table(
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER REFERENCES {}.user_table(id),
-            number VARCHAR(255) NOT NULL,
-            date_of_approve TIMESTAMP,
-            admin_id INTEGER REFERENCES {}.user_table(id)
+    if not user_table_exists:
+        await conn.execute(f"""
+            CREATE TABLE {SCHEMA_NAME}.user_table(
+                id SERIAL PRIMARY KEY,
+                tg_id BIGINT UNIQUE,
+                last_notification_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_admin BOOLEAN DEFAULT FALSE,
+                is_approve BOOLEAN DEFAULT FALSE
+            )
+        """)
+        # Добавляем администратора только если таблица создается
+        await conn.execute(f"""
+            INSERT INTO {SCHEMA_NAME}.user_table (tg_id, is_admin, is_approve)
+            VALUES ($1, $2, $3)
+        """, 123456789, True, True)
+        print("user_table создана и админ добавлен")
+    else:
+        print("user_table уже существует, админ не добавлен")
+
+    # Проверяем, существует ли таблица transaction_table
+    transaction_table_exists = await conn.fetchval(
+        """
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_schema = $1 AND table_name = 'transaction_table'
         )
-    """).format(sql.Identifier(SCHEMA_NAME),
-                sql.Identifier(SCHEMA_NAME),
-                sql.Identifier(SCHEMA_NAME)))
+        """, SCHEMA_NAME
+    )
 
-    # Добавляем одного администратора в user_table
-    cursor.execute(sql.SQL("""
-        INSERT INTO {}.user_table (tg_id, is_admin, is_approve)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (tg_id) DO NOTHING
-    """).format(sql.Identifier(SCHEMA_NAME)), (
-        123456789,  # Telegram ID админа
-        True,
-        True
-    ))
+    if not transaction_table_exists:
+        await conn.execute(f"""
+            CREATE TABLE {SCHEMA_NAME}.transaction_table(
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES {SCHEMA_NAME}.user_table(id),
+                number VARCHAR(255) NOT NULL,
+                date_of_approve TIMESTAMP,
+                admin_id INTEGER REFERENCES {SCHEMA_NAME}.user_table(id)
+            )
+        """)
+        print("transaction_table создана")
+    else:
+        print("transaction_table уже существует")
 
-    conn.commit()
-    cursor.close()
-    conn.close()
-    print("Схема и таблицы созданы, админ добавлен")
+    await conn.close()
 
 
+async def main():
+    await reset_database()  # Можно закомментировать, если не хотим сбрасывать базу
+    # await create_schema_and_tables()
+    print("Схема и таблицы проверены/созданы")
+
+
+async def insert_new_record_in_transaction_table(user_id: int, number: str, date_of_approve: str | None, admin_id: int | None):
+    conn = await asyncpg.connect(
+        user=DB_USER, password=DB_PASSWORD,
+        database=DB_NAME, host=DB_HOST, port=DB_PORT
+    )
+
+    await conn.execute(f"""
+        INSERT INTO {SCHEMA_NAME}.transaction_table (user_id, number, date_of_approve, admin_id)
+        VALUES ($1, $2, $3, $4)
+    """, user_id, number, date_of_approve, admin_id)
+    
 if __name__ == "__main__":
-    reset_database()
-    create_schema_and_tables()
-    print("База, схема и таблицы созданы заново")
+    asyncio.run(main())
