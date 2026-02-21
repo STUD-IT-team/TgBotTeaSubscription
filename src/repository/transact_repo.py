@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from abstract_repository.i_transact_repo import ITransactionRepository
+from src.abstract_repository.i_transact_repo import ITransactionRepository
 
 
 class TransactionRepository(ITransactionRepository):

@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
-from abstract_repository.i_user_repo import IUserRepository
+from src.abstract_repository.i_user_repo import IUserRepository
 
 
 class UserRepository(IUserRepository):
@@ -16,6 +16,7 @@ class UserRepository(IUserRepository):
         self.session = session
 
     async def add(self, user_id: int) -> None:
+        print("add", user_id)
         """
         Добавляет нового пользователя в user_table
         """

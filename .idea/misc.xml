@@ -3,4 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.12 (TgBotTeaSubscription)" />
   </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (dod_iscra_bot)" project-jdk-type="Python SDK" />
 </project>

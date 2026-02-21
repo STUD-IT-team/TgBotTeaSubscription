@@ -7,12 +7,12 @@ from typing import Any
 
 _async_session_maker = None
 
-from abstract_repository.i_user_repo import IUserRepository
-from abstract_repository.i_transact_repo import ITransactionRepository
+from src.abstract_repository.i_user_repo import IUserRepository
+from src.abstract_repository.i_transact_repo import ITransactionRepository
 
-from repository.user_repo import UserRepository
-from repository.transact_repo import TransactionRepository
-from settings import settings
+from src.repository.user_repo import UserRepository
+from src.repository.transact_repo import TransactionRepository
+from src.settings import settings
 
 @dataclass
 class Repositories:

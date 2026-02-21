@@ -2,8 +2,8 @@ import asyncio
 import asyncpg
 
 DB_NAME = "tgbotteadb"
-DB_USER = "nastya"
-DB_PASSWORD = "password"
+DB_USER = "danil"
+DB_PASSWORD = "password123"
 DB_HOST = "localhost"
 DB_PORT = 5432
 SCHEMA_NAME = "bot_schema"
@@ -52,9 +52,7 @@ async def setup_database():
             CREATE TABLE {SCHEMA_NAME}.user_table(
                 id SERIAL PRIMARY KEY,
                 tg_id BIGINT UNIQUE,
-                last_notification_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                is_admin BOOLEAN DEFAULT FALSE,
-                is_approve BOOLEAN DEFAULT FALSE
+                last_notification_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         print("user_table создана")

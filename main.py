@@ -1,15 +1,17 @@
 import asyncio
-import datetime
 import logging
 import os
-import bd_create
-import notifications
 
+from aiogram.filters import Command
+from aiogram.types import Message
 from aiogram import Bot, Dispatcher, Router
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.filters.callback_data import CallbackData
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
+
+from notifications.monthly_notification import monthly_notification
+from notifications.weekly_notification import weekly_notification
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -38,19 +40,42 @@ class PaymentState(StatesGroup):
 async def main():
     logging.basicConfig(level=logging.INFO)
     scheduler = AsyncIOScheduler()
+    scheduler.add_job(monthly_notification, 'cron',
+                      args=[logging, users, dp, bot, PaymentState],
+                      day=1, hour=12, minute=0)
 
-    scheduler.add_job(notifications.monthly_notification, 'cron', day=1, hour=12, minute=0)
-
-    scheduler.add_job(notifications.weekly_notification, 'cron', day=8, hour=12, minute=0)
+    scheduler.add_job(weekly_notification, 'cron',
+                      args=[logging, users, dp, bot, PaymentState],
+                      day=8, hour=12, minute=0)
 
     scheduler.start()
-
+    print(1)
     dp.include_router(router)
 
-    await bd_create()
     await bot.delete_webhook(drop_pending_updates=True)
+    print(2)
     await dp.start_polling(bot)
+    print(3)
+
+@router.message(Command("start"))
+async def cmd_start(message: Message):
+    await message.answer(f"Привет, {message.from_user.first_name}!")
+
+
+async def test_telegram():
+    bot = Bot(token=os.getenv("BOT_TOKEN"))
+    try:
+        me = await bot.get_me()
+        print(f"Бот работает: @{me.username}")
+
+        print("Удаление вебхука...")
+        await bot.delete_webhook(drop_pending_updates=True)
+        print("Вебхук удален")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+    finally:
+        await bot.session.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(test_telegram())
