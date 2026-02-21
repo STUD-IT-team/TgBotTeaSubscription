@@ -2,7 +2,7 @@ import asyncio
 import asyncpg
 
 DB_NAME = "tgbotteadb"
-DB_USER = "danil"
+DB_USER = "nastya"
 DB_PASSWORD = "password123"
 DB_HOST = "localhost"
 DB_PORT = 5432

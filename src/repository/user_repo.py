@@ -23,6 +23,7 @@ class UserRepository(IUserRepository):
         query = text("""
             INSERT INTO bot_schema.user_table (tg_id, last_notification_date)
             VALUES (:tg_id, :last_notification_date)
+            ON CONFLICT (tg_id) DO NOTHING
         """)
         try:
             row = await self.session.execute(query, {

@@ -9,9 +9,11 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.filters.callback_data import CallbackData
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
+from handlers.start_handler import start_handler
 
 from notifications.monthly_notification import monthly_notification
 from notifications.weekly_notification import weekly_notification
+from src.service_locator import get_repositories
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -20,7 +22,7 @@ ADMIN_ID = [123456789, 987654321]
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
-router = Router()
+# router = Router()
 
 
 users = {} #{user_id: {"username": str, "status": "unpaid" | "pending" | "paid"}}
@@ -42,40 +44,34 @@ async def main():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(monthly_notification, 'cron',
                       args=[logging, users, dp, bot, PaymentState],
-                      day=1, hour=12, minute=0)
+                      day=21, hour=16, minute=45)
 
-    scheduler.add_job(weekly_notification, 'cron',
+    scheduler.add_job(weekly_notification, 'interval',
                       args=[logging, users, dp, bot, PaymentState],
-                      day=8, hour=12, minute=0)
+                       days=7)
 
     scheduler.start()
-    print(1)
-    dp.include_router(router)
+    start_router = start_handler(users, PaymentState)
+    dp.include_router(start_router)
 
     await bot.delete_webhook(drop_pending_updates=True)
-    print(2)
+
     await dp.start_polling(bot)
     print(3)
 
-@router.message(Command("start"))
-async def cmd_start(message: Message):
-    await message.answer(f"Привет, {message.from_user.first_name}!")
+# @router.message(Command("start"))
+# async def cmd_start(message: Message):
+#     await message.answer(f"Привет, {message.from_user.first_name}!")
+#     user_id = message.from_user.id
+#     repos = await get_repositories() 
+#     await repos.user_repo.add(user_id)
 
-
-async def test_telegram():
-    bot = Bot(token=os.getenv("BOT_TOKEN"))
-    try:
-        me = await bot.get_me()
-        print(f"Бот работает: @{me.username}")
-
-        print("Удаление вебхука...")
-        await bot.delete_webhook(drop_pending_updates=True)
-        print("Вебхук удален")
-    except Exception as e:
-        print(f"Ошибка: {e}")
-    finally:
-        await bot.session.close()
-
+#     users[user_id] = {
+#         "username": message.from_user.username or str(user_id),
+#         "status": "unpaid"
+#     }
+#     print(users)
+#     await message.answer("Добро пожаловать! Я буду присылать вам напоминания об оплате.")
 
 if __name__ == "__main__":
-    asyncio.run(test_telegram())
+    asyncio.run(main())
