@@ -99,3 +99,19 @@ class UserRepository(IUserRepository):
 
         except SQLAlchemyError:
             raise
+
+    async def get_all_users(self) -> list:
+        """
+        Возвращает список всех пользователей (tg_id)
+        """
+        query = text("""
+            SELECT tg_id
+            FROM bot_schema.user_table
+        """)
+
+        try:
+            result = await self.session.execute(query)
+            rows = result.fetchall()
+            return [row.tg_id for row in rows]
+        except SQLAlchemyError:
+            raise

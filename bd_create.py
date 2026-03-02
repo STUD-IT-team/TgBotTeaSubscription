@@ -54,7 +54,7 @@ async def setup_database():
                 id SERIAL PRIMARY KEY,
                 tg_id BIGINT UNIQUE,
                 last_notification_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                price INTEGER DEFAULT 300
+                price INTEGER DEFAULT 425
             )
         """)
         print("user_table создана")

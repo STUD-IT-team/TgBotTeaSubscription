@@ -14,6 +14,8 @@ from handlers.start_handler import start_handler
 from handlers.admin_decision_handler import admin_handler
 from handlers.transaction_handler import transaction_handler
 from handlers.change_handler import change_handler
+from handlers.broadcast_handler import broadcast_handler
+from handlers.admin_panel_handler import admin_panel_handler
 
 from notifications.monthly_notification import monthly_notification
 from notifications.weekly_notification import weekly_notification
@@ -24,7 +26,7 @@ from src.service_locator import get_repositories
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 print(BOT_TOKEN)
-ADMIN_ID = [1476675808]
+ADMIN_ID = [1476675808, 1010098151]
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -68,6 +70,8 @@ async def main():
     await admin_handler(router, bot, admin_messages, AdminConfirmCallback, ADMIN_ID, get_repositories)
     await transaction_handler(router, bot, admin_messages, AdminConfirmCallback, ADMIN_ID, PaymentState, get_repositories)
     await change_handler(router, bot, admin_messages, PaymentState, ChangeConfirmCallback, ADMIN_ID, get_repositories)
+    await broadcast_handler(router, bot, ADMIN_ID, get_repositories)
+    await admin_panel_handler(router, bot, ADMIN_ID, get_repositories)
     dp.include_router(router)
 
 
@@ -75,7 +79,9 @@ async def main():
 
     await bot.set_my_commands([
         BotCommand(command="start", description="Начать"),
-        BotCommand(command="change", description="Изменить взнос")
+        BotCommand(command="change", description="Изменить взнос"),
+        BotCommand(command="broadcast", description="Рассылка (админ)"),
+        BotCommand(command="admin", description="Панель админа")
     ])
     await dp.start_polling(bot)
 

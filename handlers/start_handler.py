@@ -26,7 +26,7 @@ async def start_handler(router: Router, bot, users, get_repositories, PaymentSta
             price = await user_repo.get_by_tg_id(user_id)
 
             await message.answer(
-                f"Добро пожаловать! Оплатите взнос {price} рублей за этот месяц."
+                f"Добро пожаловать! Оплатите взнос {price} рублей за этот месяц и отправьте скриншот чека."
             )
 
     return router
