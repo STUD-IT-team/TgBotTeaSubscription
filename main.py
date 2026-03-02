@@ -24,7 +24,7 @@ from src.service_locator import get_repositories
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 print(BOT_TOKEN)
-ADMIN_ID = [770484979]
+ADMIN_ID = [1476675808]
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()

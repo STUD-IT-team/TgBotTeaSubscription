@@ -1,10 +1,11 @@
 import asyncio
 import asyncpg
+import os
 
 DB_NAME = "tgbotteadb"
 DB_USER = "danil"
 DB_PASSWORD = "password123"
-DB_HOST = "localhost"
+DB_HOST = os.getenv("DB_HOST", "db")
 DB_PORT = 5432
 SCHEMA_NAME = "bot_schema"
 
